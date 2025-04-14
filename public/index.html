@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEAR AI Bridge Agent</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f7f9fc;
+        }
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        h1 {
+            color: #00C1DE;
+        }
+        .agent-container {
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+        .action-selection {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        .action-btn {
+            padding: 8px 15px;
+            background-color: #00C1DE;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .action-btn:hover {
+            background-color: #009BB1;
+        }
+        .action-btn.active {
+            background-color: #009BB1;
+            font-weight: bold;
+        }
+        .params-container {
+            margin-bottom: 15px;
+        }
+        .hidden {
+            display: none;
+        }
+        textarea, input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-family: inherit;
+            margin-bottom: 10px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #00C1DE;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #009BB1;
+        }
+        .response-container {
+            background-color: #f0f0f0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            margin-top: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+            background-color: #4caf50;
+            color: white;
+            margin-right: 10px;
+        }
+        .ai-mode-badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+            background-color: #2196F3;
+            color: white;
+        }
+        .badge-container {
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>NEAR AI Bridge Agent</h1>
+        <p>Alpha version - interactive agent interface</p>
+        <div class="badge-container">
+            <div class="status-badge">OPERATIONAL</div>
+            <div class="ai-mode-badge" id="ai-mode-badge">Loading...</div>
+        </div>
+        <div class="auth-link" style="margin-top: 15px;">
+            <a href="/auth.html" style="color: #00C1DE; text-decoration: none; font-weight: bold;">
+                Connect NEAR Wallet for AI Authentication
+            </a>
+            <span style="margin: 0 10px;">|</span>
+            <a href="/zcash-bridge.html" style="color: #F4B728; text-decoration: none; font-weight: bold;">
+                NEAR-Zcash Bridge
+            </a>
+            <span style="margin: 0 10px;">|</span>
+            <a href="/secret-network.html" style="color: #6a3de8; text-decoration: none; font-weight: bold;">
+                Secret Network TEE
+            </a>
+        </div>
+    </header>
+
+    <div class="agent-container">
+        <h2>Agent Actions</h2>
+        <div class="action-selection">
+            <button class="action-btn active" data-action="query">Query</button>
+            <button class="action-btn" data-action="transact">Transaction</button>
+            <button class="action-btn" data-action="analyze">Analyze</button>
+            <button class="action-btn" data-action="status">Status</button>
+        </div>
+
+        <div id="query-params" class="params-container">
+            <h3>Query</h3>
+            <textarea id="query-prompt" rows="4" placeholder="Enter your question or prompt..."></textarea>
+        </div>
+
+        <div id="transact-params" class="params-container hidden">
+            <h3>NEAR Transaction</h3>
+            <input type="text" id="contract-id" placeholder="Contract ID (e.g. example.testnet)">
+            <input type="text" id="method-name" placeholder="Method name (e.g. transfer)">
+            <textarea id="method-args" rows="4" placeholder='Arguments as JSON (e.g. {"amount": "1000000000000000000000000"})'></textarea>
+        </div>
+
+        <div id="analyze-params" class="params-container hidden">
+            <h3>Data Analysis</h3>
+            <textarea id="analysis-data" rows="6" placeholder="Enter data for analysis in JSON format..."></textarea>
+        </div>
+
+        <div id="status-params" class="params-container hidden">
+            <h3>Agent Status</h3>
+            <p>Check the current status of the agent, including AI mode and connections.</p>
+            <p>This will show detailed information about the agent's configuration and integrations.</p>
+        </div>
+
+        <button id="execute-btn">Execute</button>
+    </div>
+
+    <div class="response-container" id="response">
+        <p>Response will appear here...</p>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Action buttons
+            const actionButtons = document.querySelectorAll('.action-btn');
+            const paramsContainers = document.querySelectorAll('.params-container');
+            const executeBtn = document.getElementById('execute-btn');
+            const responseContainer = document.getElementById('response');
+            const aiModeBadge = document.getElementById('ai-mode-badge');
+            
+            let currentAction = 'query';
+
+            // Fetch initial status
+            fetchStatus();
+
+            // Switch between action types
+            actionButtons.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    // Update active button
+                    actionButtons.forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // Show relevant params container
+                    const action = this.dataset.action;
+                    currentAction = action;
+                    
+                    paramsContainers.forEach(container => {
+                        container.classList.add('hidden');
+                    });
+                    
+                    document.getElementById(`${action}-params`).classList.remove('hidden');
+                });
+            });
+
+            // Execute button
+            executeBtn.addEventListener('click', async function() {
+                responseContainer.innerHTML = 'Processing...';
+                
+                // If status action, just get status
+                if (currentAction === 'status') {
+                    fetchDetailedStatus();
+                    return;
+                }
+                
+                let params = {};
+                
+                // Get params based on current action
+                if (currentAction === 'query') {
+                    params = {
+                        prompt: document.getElementById('query-prompt').value
+                    };
+                } else if (currentAction === 'transact') {
+                    try {
+                        const argsStr = document.getElementById('method-args').value;
+                        const args = argsStr ? JSON.parse(argsStr) : {};
+                        
+                        params = {
+                            contractId: document.getElementById('contract-id').value,
+                            method: document.getElementById('method-name').value,
+                            args: args
+                        };
+                    } catch (e) {
+                        responseContainer.innerHTML = 'Error: Invalid JSON in arguments';
+                        return;
+                    }
+                } else if (currentAction === 'analyze') {
+                    try {
+                        const dataStr = document.getElementById('analysis-data').value;
+                        const data = dataStr ? JSON.parse(dataStr) : {};
+                        
+                        params = { data };
+                    } catch (e) {
+                        responseContainer.innerHTML = 'Error: Invalid JSON data';
+                        return;
+                    }
+                }
+                
+                try {
+                    // Send request to API
+                    const response = await fetch('/agent/action', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            action: currentAction,
+                            params
+                        })
+                    });
+                    
+                    const result = await response.json();
+                    
+                    // Display response right here
+                    responseContainer.innerHTML = JSON.stringify(result, null, 2);
+                } catch (error) {
+                    responseContainer.innerHTML = `Error: ${error.message}`;
+                }
+            });
+
+            async function fetchStatus() {
+                try {
+                    const response = await fetch('/api/status');
+                    const data = await response.json();
+                    aiModeBadge.textContent = data.aiMode;
+                } catch (error) {
+                    aiModeBadge.textContent = 'Status Error';
+                }
+            }
+
+            async function fetchDetailedStatus() {
+                try {
+                    const response = await fetch('/api/status/detailed');
+                    const data = await response.json();
+                    responseContainer.innerHTML = JSON.stringify(data, null, 2);
+                } catch (error) {
+                    responseContainer.innerHTML = `Error fetching status: ${error.message}`;
+                }
+            }
+        });
+    </script>
+</body>
+</html> 

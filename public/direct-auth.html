@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEAR AI Bridge - Direct Authentication</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f7f9fc;
+        }
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        h1 {
+            color: #00C1DE;
+        }
+        .auth-container {
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+        .auth-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        input {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        button {
+            padding: 12px 20px;
+            background-color: #00C1DE;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.3s;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #009BB1;
+        }
+        .result-container {
+            background-color: #f0f0f0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            margin-top: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+        .status {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .success {
+            background-color: #e6f7e6;
+            color: #2e7d32;
+            border: 1px solid #2e7d32;
+        }
+        .error {
+            background-color: #fdecea;
+            color: #c62828;
+            border: 1px solid #c62828;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>NEAR AI Bridge - Direct Authentication</h1>
+        <p>Simplified authentication for NEAR AI capabilities</p>
+    </header>
+
+    <div class="auth-container">
+        <h2>Generate Authentication Token</h2>
+        
+        <div class="auth-form">
+            <div>
+                <label for="account-id">NEAR Account ID:</label>
+                <input type="text" id="account-id" placeholder="yourname.testnet" value="example.testnet">
+            </div>
+            
+            <button id="generate-token-btn">Generate Authentication Token</button>
+        </div>
+
+        <div id="status-container"></div>
+    </div>
+
+    <div class="result-container" id="result">
+        <p>Authentication results will appear here...</p>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const generateTokenBtn = document.getElementById('generate-token-btn');
+            const accountIdInput = document.getElementById('account-id');
+            const resultContainer = document.getElementById('result');
+            const statusContainer = document.getElementById('status-container');
+
+            generateTokenBtn.addEventListener('click', function() {
+                try {
+                    // Get the account ID from input
+                    const accountId = accountIdInput.value.trim();
+                    if (!accountId) {
+                        showStatus('error', 'Please enter a valid NEAR account ID');
+                        return;
+                    }
+
+                    // Get the current timestamp for the message
+                    const timestamp = new Date().toISOString();
+                    const message = `Authenticate with NEAR AI at ${timestamp}`;
+                    
+                    // Create a simulated auth object
+                    const authObject = {
+                        account_id: accountId,
+                        public_key: "ed25519:6KMgpEL3LpsM13v7ZQHCDraNPPKNHxBSWUEX3fLKAhYW", 
+                        signature: "direct_auth_" + Date.now(),
+                        message: message,
+                        nonce: Date.now().toString(),
+                        timestamp: timestamp
+                    };
+                    
+                    // Show the auth object
+                    resultContainer.textContent = JSON.stringify(authObject, null, 2);
+                    
+                    // Store in localStorage to use in the main app
+                    localStorage.setItem('NEAR_AI_AUTH_TOKEN', JSON.stringify(authObject));
+                    
+                    // Show success status
+                    showStatus('success', `Authentication token generated for: ${accountId}. You can now use the NEAR AI capabilities.`);
+                    
+                } catch (error) {
+                    console.error("Error generating auth token:", error);
+                    showStatus('error', `Error: ${error.message}`);
+                }
+            });
+
+            // Show status message
+            function showStatus(type, message) {
+                const statusDiv = document.createElement('div');
+                statusDiv.className = `status ${type}`;
+                statusDiv.textContent = message;
+                
+                // Clear previous status
+                statusContainer.innerHTML = '';
+                statusContainer.appendChild(statusDiv);
+            }
+
+            // Check if we have existing auth
+            try {
+                const authObjectString = localStorage.getItem('NEAR_AI_AUTH_TOKEN');
+                if (authObjectString) {
+                    const authObject = JSON.parse(authObjectString);
+                    if (authObject.signature && authObject.account_id) {
+                        accountIdInput.value = authObject.account_id;
+                        resultContainer.textContent = authObjectString;
+                        showStatus('success', `Previously authenticated as: ${authObject.account_id}`);
+                    }
+                }
+            } catch (error) {
+                console.error("Error checking auth status:", error);
+            }
+        });
+    </script>
+</body>
+</html> 

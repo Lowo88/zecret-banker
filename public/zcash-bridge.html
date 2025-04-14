@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEAR-Zcash Bridge</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f7f9fc;
+        }
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        h1 {
+            color: #00C1DE;
+        }
+        .bridge-container {
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #ddd;
+        }
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            font-weight: bold;
+        }
+        .tab.active {
+            border-bottom: 3px solid #00C1DE;
+            color: #00C1DE;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        button {
+            padding: 12px 20px;
+            background-color: #00C1DE;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.3s;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #009BB1;
+        }
+        .result-container {
+            background-color: #f0f0f0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            margin-top: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+        .badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .near-badge {
+            background-color: #00C1DE;
+            color: white;
+        }
+        .zcash-badge {
+            background-color: #F4B728;
+            color: white;
+        }
+        .status-badge {
+            background-color: #4CAF50;
+            color: white;
+        }
+        .info-section {
+            background-color: #e8f4f8;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .wallet-section {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        .wallet-card {
+            background-color: white;
+            padding: 15px;
+            border-radius: 8px;
+            width: 48%;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .transaction-history {
+            margin-top: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f0f0f0;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>NEAR-Zcash Bridge</h1>
+        <p>Cross-chain transactions and privacy features powered by NEAR AI</p>
+        <div>
+            <span class="badge near-badge">NEAR</span>
+            <span class="badge zcash-badge">Zcash</span>
+            <span class="badge status-badge" id="bridge-status">Connected</span>
+        </div>
+        <div style="margin-top: 15px;">
+            <a href="/" style="color: #00C1DE; text-decoration: none; margin-right: 20px;">Back to Main Dashboard</a>
+            <a href="/auth.html" style="color: #00C1DE; text-decoration: none;">Connect Wallet</a>
+        </div>
+    </header>
+
+    <div class="bridge-container">
+        <div class="info-section">
+            <h3>Bridge Status</h3>
+            <p>The NEAR-Zcash bridge allows you to transfer assets between NEAR Protocol and Zcash, providing cross-chain functionality with privacy features.</p>
+            <p>Current authenticated account: <span id="current-account">Loading...</span></p>
+        </div>
+
+        <div class="wallet-section">
+            <div class="wallet-card">
+                <h3>NEAR Wallet</h3>
+                <p>Account: <span id="near-account">Loading...</span></p>
+                <p>Balance: <span id="near-balance">Loading...</span> NEAR</p>
+            </div>
+            <div class="wallet-card">
+                <h3>Zcash Wallet</h3>
+                <p>Address: <span id="zcash-address">Connect Zcash wallet</span></p>
+                <p>Balance: <span id="zcash-balance">-</span> ZEC</p>
+                <button id="connect-zcash-btn">Connect Zcash</button>
+            </div>
+        </div>
+
+        <div class="tabs">
+            <div class="tab active" data-tab="transfer">Transfer Assets</div>
+            <div class="tab" data-tab="shield">Shield Transactions</div>
+            <div class="tab" data-tab="history">Transaction History</div>
+        </div>
+
+        <div id="transfer-tab" class="tab-content active">
+            <h3>Transfer Between Chains</h3>
+            <div class="form-group">
+                <label for="transfer-from">From Chain:</label>
+                <select id="transfer-from">
+                    <option value="near">NEAR Protocol</option>
+                    <option value="zcash">Zcash</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="transfer-to">To Chain:</label>
+                <select id="transfer-to">
+                    <option value="zcash">Zcash</option>
+                    <option value="near">NEAR Protocol</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="transfer-amount">Amount:</label>
+                <input type="number" id="transfer-amount" placeholder="0.0" step="0.000001" min="0">
+            </div>
+            <div class="form-group">
+                <label for="recipient-address">Recipient Address:</label>
+                <input type="text" id="recipient-address" placeholder="Recipient's address">
+            </div>
+            <button id="transfer-btn">Initiate Transfer</button>
+        </div>
+
+        <div id="shield-tab" class="tab-content">
+            <h3>Privacy-Preserving Transactions</h3>
+            <div class="form-group">
+                <label for="shield-type">Transaction Type:</label>
+                <select id="shield-type">
+                    <option value="shield">Shield (Transparent → Private)</option>
+                    <option value="deshield">De-shield (Private → Transparent)</option>
+                    <option value="private">Private Transfer (Private → Private)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="shield-amount">Amount:</label>
+                <input type="number" id="shield-amount" placeholder="0.0" step="0.000001" min="0">
+            </div>
+            <div class="form-group">
+                <label for="shield-address">Address (for deshield/private transfer):</label>
+                <input type="text" id="shield-address" placeholder="Recipient's address">
+            </div>
+            <div class="form-group">
+                <label for="shield-memo">Memo (optional):</label>
+                <textarea id="shield-memo" rows="2" placeholder="Add an encrypted memo to your transaction"></textarea>
+            </div>
+            <button id="shield-btn">Execute Transaction</button>
+        </div>
+
+        <div id="history-tab" class="tab-content">
+            <h3>Cross-Chain Transaction History</h3>
+            <div class="form-group">
+                <label for="history-filter">Filter By:</label>
+                <select id="history-filter">
+                    <option value="all">All Transactions</option>
+                    <option value="near-to-zcash">NEAR → Zcash</option>
+                    <option value="zcash-to-near">Zcash → NEAR</option>
+                    <option value="shield">Shield Operations</option>
+                </select>
+            </div>
+            <div class="transaction-history">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Type</th>
+                            <th>Amount</th>
+                            <th>From</th>
+                            <th>To</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="transaction-list">
+                        <tr>
+                            <td colspan="6" style="text-align: center;">No transactions yet</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="result-container" id="result">
+        <p>Operation results will appear here...</p>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Get DOM elements
+            const tabs = document.querySelectorAll('.tab');
+            const tabContents = document.querySelectorAll('.tab-content');
+            const transferBtn = document.getElementById('transfer-btn');
+            const shieldBtn = document.getElementById('shield-btn');
+            const connectZcashBtn = document.getElementById('connect-zcash-btn');
+            const resultContainer = document.getElementById('result');
+            const currentAccountEl = document.getElementById('current-account');
+            const nearAccountEl = document.getElementById('near-account');
+            const nearBalanceEl = document.getElementById('near-balance');
+            const zcashAddressEl = document.getElementById('zcash-address');
+            const zcashBalanceEl = document.getElementById('zcash-balance');
+            
+            // Tab switching
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    // Remove active class from all tabs and contents
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tabContents.forEach(c => c.classList.remove('active'));
+                    
+                    // Add active class to clicked tab and corresponding content
+                    tab.classList.add('active');
+                    const tabName = tab.dataset.tab;
+                    document.getElementById(`${tabName}-tab`).classList.add('active');
+                });
+            });
+            
+            // Check if user is authenticated
+            async function checkAuthentication() {
+                try {
+                    // Try to get auth token from localStorage
+                    const authTokenStr = localStorage.getItem('NEAR_AI_AUTH_TOKEN');
+                    if (!authTokenStr) {
+                        currentAccountEl.textContent = 'Not authenticated';
+                        return null;
+                    }
+                    
+                    const authToken = JSON.parse(authTokenStr);
+                    if (authToken && authToken.account_id) {
+                        currentAccountEl.textContent = authToken.account_id;
+                        nearAccountEl.textContent = authToken.account_id;
+                        
+                        // Simulate a NEAR balance
+                        nearBalanceEl.textContent = (Math.random() * 10).toFixed(4);
+                        
+                        return authToken.account_id;
+                    } else {
+                        currentAccountEl.textContent = 'Invalid auth token';
+                        return null;
+                    }
+                } catch (error) {
+                    console.error('Error checking authentication:', error);
+                    currentAccountEl.textContent = 'Error checking auth';
+                    return null;
+                }
+            }
+            
+            // Connect Zcash wallet
+            connectZcashBtn.addEventListener('click', async () => {
+                try {
+                    resultContainer.textContent = 'Connecting to Zcash wallet...';
+                    
+                    // Simulate connection to Zcash wallet
+                    await new Promise(resolve => setTimeout(resolve, 1500));
+                    
+                    // Generate a simulated Zcash address
+                    const zcashAddress = 'zs1' + Array.from({length: 30}, () => 
+                        '0123456789abcdef'[Math.floor(Math.random() * 16)]).join('');
+                    
+                    zcashAddressEl.textContent = zcashAddress;
+                    zcashBalanceEl.textContent = (Math.random() * 5).toFixed(6);
+                    
+                    resultContainer.textContent = 'Successfully connected to Zcash wallet';
+                    connectZcashBtn.textContent = 'Reconnect Zcash';
+                } catch (error) {
+                    console.error('Error connecting to Zcash wallet:', error);
+                    resultContainer.textContent = `Error: ${error.message}`;
+                }
+            });
+            
+            // Transfer assets
+            transferBtn.addEventListener('click', async () => {
+                try {
+                    const fromChain = document.getElementById('transfer-from').value;
+                    const toChain = document.getElementById('transfer-to').value;
+                    const amount = document.getElementById('transfer-amount').value;
+                    const recipient = document.getElementById('recipient-address').value;
+                    
+                    if (!amount || parseFloat(amount) <= 0) {
+                        resultContainer.textContent = 'Error: Please enter a valid amount';
+                        return;
+                    }
+                    
+                    if (!recipient) {
+                        resultContainer.textContent = 'Error: Please enter a recipient address';
+                        return;
+                    }
+                    
+                    resultContainer.textContent = `Initiating transfer of ${amount} from ${fromChain} to ${toChain}...`;
+                    
+                    // Simulate API call to bridge service
+                    await new Promise(resolve => setTimeout(resolve, 2000));
+                    
+                    // Example response
+                    const response = {
+                        success: true,
+                        transactionId: `tx_${Date.now()}`,
+                        fromChain: fromChain,
+                        toChain: toChain,
+                        amount: amount,
+                        recipient: recipient,
+                        estimatedCompletionTime: '10-30 minutes',
+                        status: 'pending'
+                    };
+                    
+                    // Update the transaction list
+                    updateTransactionList({
+                        date: new Date().toLocaleString(),
+                        type: `${fromChain.toUpperCase()} → ${toChain.toUpperCase()}`,
+                        amount: amount,
+                        from: fromChain === 'near' ? nearAccountEl.textContent : zcashAddressEl.textContent,
+                        to: recipient,
+                        status: 'Pending'
+                    });
+                    
+                    resultContainer.textContent = JSON.stringify(response, null, 2);
+                } catch (error) {
+                    console.error('Error during transfer:', error);
+                    resultContainer.textContent = `Error: ${error.message}`;
+                }
+            });
+            
+            // Shield/deshield transactions
+            shieldBtn.addEventListener('click', async () => {
+                try {
+                    const shieldType = document.getElementById('shield-type').value;
+                    const amount = document.getElementById('shield-amount').value;
+                    const address = document.getElementById('shield-address').value;
+                    const memo = document.getElementById('shield-memo').value;
+                    
+                    if (!amount || parseFloat(amount) <= 0) {
+                        resultContainer.textContent = 'Error: Please enter a valid amount';
+                        return;
+                    }
+                    
+                    if ((shieldType === 'deshield' || shieldType === 'private') && !address) {
+                        resultContainer.textContent = 'Error: Please enter a recipient address';
+                        return;
+                    }
+                    
+                    resultContainer.textContent = `Executing ${shieldType} transaction of ${amount} ZEC...`;
+                    
+                    // Simulate API call to privacy service
+                    await new Promise(resolve => setTimeout(resolve, 2000));
+                    
+                    // Example response
+                    const response = {
+                        success: true,
+                        operationType: shieldType,
+                        transactionId: `zec_${Date.now()}`,
+                        amount: amount,
+                        recipient: address || 'self',
+                        memo: memo ? '*****' : 'None',
+                        status: 'confirmed'
+                    };
+                    
+                    // Update the transaction list
+                    updateTransactionList({
+                        date: new Date().toLocaleString(),
+                        type: `Zcash ${shieldType.charAt(0).toUpperCase() + shieldType.slice(1)}`,
+                        amount: amount,
+                        from: zcashAddressEl.textContent,
+                        to: address || 'Self',
+                        status: 'Confirmed'
+                    });
+                    
+                    resultContainer.textContent = JSON.stringify(response, null, 2);
+                } catch (error) {
+                    console.error('Error during shield operation:', error);
+                    resultContainer.textContent = `Error: ${error.message}`;
+                }
+            });
+            
+            // Update the transaction list with a new entry
+            function updateTransactionList(transaction) {
+                const transactionList = document.getElementById('transaction-list');
+                
+                // Remove the "No transactions" row if it exists
+                if (transactionList.querySelector('td[colspan="6"]')) {
+                    transactionList.innerHTML = '';
+                }
+                
+                // Create new row
+                const newRow = document.createElement('tr');
+                newRow.innerHTML = `
+                    <td>${transaction.date}</td>
+                    <td>${transaction.type}</td>
+                    <td>${transaction.amount}</td>
+                    <td>${transaction.from}</td>
+                    <td>${transaction.to}</td>
+                    <td>${transaction.status}</td>
+                `;
+                
+                // Add row to the top of the table
+                transactionList.insertBefore(newRow, transactionList.firstChild);
+            }
+            
+            // Initialize the page
+            async function initialize() {
+                await checkAuthentication();
+            }
+            
+            initialize();
+        });
+    </script>
+</body>
+</html> 
