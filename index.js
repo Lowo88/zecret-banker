@@ -56,7 +56,7 @@ const secretNetworkService = new SecretNetworkService({
 // Basic status endpoint
 app.get('/api/status', (req, res) => {
   res.json({ 
-    message: 'NEAR AI Bridge Agent is running',
+    message: 'Zecret-banker is running',
     version: 'alpha-0.1.0',
     status: 'operational',
     aiMode: process.env.USE_ACTUAL_API === 'true' ? 'NEAR AI API' : 'Simulation'
@@ -310,8 +310,8 @@ app.get('*', (req, res) => {
 
 // Start server
 app.listen(PORT, () => {
-  console.log(`NEAR AI Bridge Agent is running on port ${PORT}`);
-  console.log(`Open http://localhost:${PORT} to interact with the agent`);
+  console.log(`Zecret-banker is running on port ${PORT}`);
+  console.log(`Open http://localhost:${PORT} to interact with the application`);
   console.log(`Open http://localhost:${PORT}/zcash-bridge.html to use the NEAR-Zcash bridge`);
   console.log(`Open http://localhost:${PORT}/secret-network.html to use Secret Network TEE features`);
   console.log(`AI Mode: ${process.env.USE_ACTUAL_API === 'true' ? 'Using NEAR AI API' : 'Using simulation mode'}`);

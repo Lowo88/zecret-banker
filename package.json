@@ -1,5 +1,5 @@
 {
-  "name": "near-ai-bridge",
+  "name": "zecret-banker",
   "version": "1.0.0",
   "description": "AI agent that bridges NEAR blockchain with AI capabilities",
   "main": "index.js",
