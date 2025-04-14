@@ -20,7 +20,7 @@ This project implements a bridge between NEAR Protocol and Zcash, allowing for c
 
 1. Clone the repository
 ```bash
-git clone https://github.com/yourusername/zecret-banker.git
+git clone https://github.com/Lowo88/zecret-banker.git
 cd zecret-banker
 ```
 
