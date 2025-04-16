@@ -8,16 +8,22 @@
     "dev": "nodemon index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": ["near", "ai", "agent", "blockchain", "bridge"],
+  "keywords": [
+    "near",
+    "ai",
+    "agent",
+    "blockchain",
+    "bridge"
+  ],
   "author": "",
   "license": "ISC",
   "dependencies": {
     "@near-wallet-selector/core": "^8.5.4",
-    "@near-wallet-selector/modal-ui": "^8.5.4",
-    "@near-wallet-selector/near-wallet": "^8.5.4",
-    "@near-wallet-selector/my-near-wallet": "^8.5.4",
     "@near-wallet-selector/here-wallet": "^8.5.4",
     "@near-wallet-selector/meteor-wallet": "^8.5.4",
+    "@near-wallet-selector/modal-ui": "^8.5.4",
+    "@near-wallet-selector/my-near-wallet": "^8.5.4",
+    "@near-wallet-selector/near-wallet": "^8.5.4",
     "axios": "^1.8.4",
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",

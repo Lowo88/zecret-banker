@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEAR Intents - Zecret-banker</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f7f9fc;
+        }
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        h1 {
+            color: #00C1DE;
+        }
+        .container {
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+        .tab-navigation {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        .tab-btn {
+            padding: 8px 15px;
+            background-color: #00C1DE;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .tab-btn:hover {
+            background-color: #009BB1;
+        }
+        .tab-btn.active {
+            background-color: #009BB1;
+            font-weight: bold;
+        }
+        .tab-content {
+            margin-bottom: 15px;
+        }
+        .tab-panel {
+            display: none;
+        }
+        .tab-panel.active {
+            display: block;
+        }
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-family: inherit;
+            margin-bottom: 10px;
+            box-sizing: border-box;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+            margin-right: 10px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #00C1DE;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #009BB1;
+        }
+        .response-container {
+            background-color: #f0f0f0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            margin-top: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+        .transaction-list {
+            margin-top: 20px;
+        }
+        .transaction-item {
+            background-color: #f0f0f0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 10px;
+        }
+        .transaction-status {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        .status-pending {
+            background-color: #ffc107;
+            color: #333;
+        }
+        .status-processing {
+            background-color: #17a2b8;
+            color: white;
+        }
+        .status-completed {
+            background-color: #28a745;
+            color: white;
+        }
+        .status-failed {
+            background-color: #dc3545;
+            color: white;
+        }
+        .badge-container {
+            margin-top: 10px;
+        }
+        .nav-links {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .nav-links a {
+            color: #00C1DE;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .nav-links a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>NEAR Intents</h1>
+        <p>Cross-chain operations powered by NEAR Intents</p>
+        <div class="nav-links">
+            <a href="/">Home</a>
+            <a href="/zcash-bridge.html">Zcash Bridge</a>
+            <a href="/secret-network.html">Secret Network</a>
+            <a href="/near-intents.html" style="color: #009BB1; text-decoration: underline;">NEAR Intents</a>
+        </div>
+    </header>
+
+    <div class="container">
+        <h2>Create Intent</h2>
+        <div class="tab-navigation">
+            <button class="tab-btn active" data-tab="bridge-zcash">Bridge to Zcash</button>
+            <button class="tab-btn" data-tab="bridge-secret">Bridge to Secret</button>
+            <button class="tab-btn" data-tab="private-swap">Private Swap</button>
+            <button class="tab-btn" data-tab="check-status">Check Status</button>
+        </div>
+
+        <div class="tab-content">
+            <!-- Bridge to Zcash Tab -->
+            <div class="tab-panel active" id="bridge-zcash">
+                <h3>Bridge NEAR to Zcash</h3>
+                <form id="bridge-zcash-form">
+                    <div class="form-group">
+                        <label for="zcash-amount">Amount (NEAR)</label>
+                        <input type="number" id="zcash-amount" step="0.1" min="0.1" placeholder="Enter amount of NEAR to bridge" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="zcash-address">Zcash Receiver Address</label>
+                        <input type="text" id="zcash-address" placeholder="Enter Zcash address" required>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="zcash-shielded" checked>
+                        <label for="zcash-shielded">Use shielded Zcash transaction</label>
+                    </div>
+                    <button type="submit">Create Bridge Intent</button>
+                </form>
+            </div>
+
+            <!-- Bridge to Secret Tab -->
+            <div class="tab-panel" id="bridge-secret">
+                <h3>Bridge NEAR to Secret Network</h3>
+                <form id="bridge-secret-form">
+                    <div class="form-group">
+                        <label for="secret-amount">Amount (NEAR)</label>
+                        <input type="number" id="secret-amount" step="0.1" min="0.1" placeholder="Enter amount of NEAR to bridge" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="secret-address">Secret Network Receiver Address</label>
+                        <input type="text" id="secret-address" placeholder="Enter Secret Network address" required>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="secret-encrypted" checked>
+                        <label for="secret-encrypted">Encrypt transaction data</label>
+                    </div>
+                    <button type="submit">Create Bridge Intent</button>
+                </form>
+            </div>
+
+            <!-- Private Swap Tab -->
+            <div class="tab-panel" id="private-swap">
+                <h3>Private Token Swap</h3>
+                <form id="private-swap-form">
+                    <div class="form-group">
+                        <label for="from-token">From Token</label>
+                        <select id="from-token" required>
+                            <option value="NEAR">NEAR</option>
+                            <option value="ZEC">ZEC</option>
+                            <option value="SCRT">SCRT</option>
+                            <option value="WNEAR">Wrapped NEAR</option>
+                            <option value="wBTC">Wrapped BTC</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="to-token">To Token</label>
+                        <select id="to-token" required>
+                            <option value="ZEC">ZEC</option>
+                            <option value="SCRT">SCRT</option>
+                            <option value="NEAR">NEAR</option>
+                            <option value="wBTC">Wrapped BTC</option>
+                            <option value="WNEAR">Wrapped NEAR</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="swap-amount">Amount</label>
+                        <input type="number" id="swap-amount" step="0.1" min="0.1" placeholder="Enter amount to swap" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="min-amount-out">Minimum Amount Out (optional)</label>
+                        <input type="number" id="min-amount-out" step="0.1" min="0" placeholder="Minimum amount to receive">
+                    </div>
+                    <div class="form-group">
+                        <label for="privacy-level">Privacy Level</label>
+                        <select id="privacy-level" required>
+                            <option value="maximum">Maximum</option>
+                            <option value="standard" selected>Standard</option>
+                            <option value="minimal">Minimal</option>
+                        </select>
+                    </div>
+                    <button type="submit">Create Swap Intent</button>
+                </form>
+            </div>
+
+            <!-- Check Status Tab -->
+            <div class="tab-panel" id="check-status">
+                <h3>Check Intent Status</h3>
+                <form id="check-status-form">
+                    <div class="form-group">
+                        <label for="intent-id">Intent ID</label>
+                        <input type="text" id="intent-id" placeholder="Enter intent ID" required>
+                    </div>
+                    <button type="submit">Check Status</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="response-container" id="response">
+            <p>Response will appear here...</p>
+        </div>
+    </div>
+
+    <div class="container transaction-list">
+        <h2>Recent Intents</h2>
+        <div id="transactions-container">
+            <p>No recent intents found. Create an intent to see it here.</p>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Tab Navigation
+            const tabButtons = document.querySelectorAll('.tab-btn');
+            const tabPanels = document.querySelectorAll('.tab-panel');
+            
+            tabButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const tabId = button.getAttribute('data-tab');
+                    
+                    // Update active button
+                    tabButtons.forEach(btn => btn.classList.remove('active'));
+                    button.classList.add('active');
+                    
+                    // Update active panel
+                    tabPanels.forEach(panel => panel.classList.remove('active'));
+                    document.getElementById(tabId).classList.add('active');
+                });
+            });
+            
+            // Response container
+            const responseContainer = document.getElementById('response');
+            
+            // Form submissions
+            const bridgeZcashForm = document.getElementById('bridge-zcash-form');
+            const bridgeSecretForm = document.getElementById('bridge-secret-form');
+            const privateSwapForm = document.getElementById('private-swap-form');
+            const checkStatusForm = document.getElementById('check-status-form');
+            
+            // Keep track of transactions
+            let transactions = [];
+            
+            // Bridge to Zcash form
+            bridgeZcashForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                responseContainer.innerHTML = 'Processing...';
+                
+                const amount = document.getElementById('zcash-amount').value;
+                const receiverAddress = document.getElementById('zcash-address').value;
+                const shielded = document.getElementById('zcash-shielded').checked;
+                
+                try {
+                    const response = await fetch('/api/intents/bridge-to-zcash', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            amount,
+                            receiverAddress,
+                            shielded
+                        })
+                    });
+                    
+                    const result = await response.json();
+                    responseContainer.innerHTML = JSON.stringify(result, null, 2);
+                    
+                    if (result.success) {
+                        addTransaction(result);
+                    }
+                } catch (error) {
+                    responseContainer.innerHTML = `Error: ${error.message}`;
+                }
+            });
+            
+            // Bridge to Secret form
+            bridgeSecretForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                responseContainer.innerHTML = 'Processing...';
+                
+                const amount = document.getElementById('secret-amount').value;
+                const receiverAddress = document.getElementById('secret-address').value;
+                const encrypted = document.getElementById('secret-encrypted').checked;
+                
+                try {
+                    const response = await fetch('/api/intents/bridge-to-secret', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            amount,
+                            receiverAddress,
+                            encrypted
+                        })
+                    });
+                    
+                    const result = await response.json();
+                    responseContainer.innerHTML = JSON.stringify(result, null, 2);
+                    
+                    if (result.success) {
+                        addTransaction(result);
+                    }
+                } catch (error) {
+                    responseContainer.innerHTML = `Error: ${error.message}`;
+                }
+            });
+            
+            // Private Swap form
+            privateSwapForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                responseContainer.innerHTML = 'Processing...';
+                
+                const fromToken = document.getElementById('from-token').value;
+                const toToken = document.getElementById('to-token').value;
+                const amount = document.getElementById('swap-amount').value;
+                const minAmountOut = document.getElementById('min-amount-out').value || '0';
+                const privacyLevel = document.getElementById('privacy-level').value;
+                
+                try {
+                    const response = await fetch('/api/intents/private-swap', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            fromToken,
+                            toToken,
+                            amount,
+                            minAmountOut,
+                            privacyLevel
+                        })
+                    });
+                    
+                    const result = await response.json();
+                    responseContainer.innerHTML = JSON.stringify(result, null, 2);
+                    
+                    if (result.success) {
+                        addTransaction(result);
+                    }
+                } catch (error) {
+                    responseContainer.innerHTML = `Error: ${error.message}`;
+                }
+            });
+            
+            // Check Status form
+            checkStatusForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                responseContainer.innerHTML = 'Checking status...';
+                
+                const intentId = document.getElementById('intent-id').value;
+                
+                try {
+                    const response = await fetch(`/api/intents/status/${intentId}`);
+                    const result = await response.json();
+                    responseContainer.innerHTML = JSON.stringify(result, null, 2);
+                    
+                    if (result.success) {
+                        updateTransactionStatus(result.intentId, result.status);
+                    }
+                } catch (error) {
+                    responseContainer.innerHTML = `Error: ${error.message}`;
+                }
+            });
+            
+            // Add transaction to the list
+            function addTransaction(transaction) {
+                // Add to local array
+                transactions.unshift({
+                    intentId: transaction.intentId,
+                    type: transaction.type,
+                    status: transaction.status,
+                    timestamp: new Date().toISOString(),
+                    params: transaction.params
+                });
+                
+                // Limit to 10 transactions
+                if (transactions.length > 10) {
+                    transactions = transactions.slice(0, 10);
+                }
+                
+                // Save to localStorage
+                localStorage.setItem('zecret-banker-intents', JSON.stringify(transactions));
+                
+                // Update UI
+                renderTransactions();
+            }
+            
+            // Update transaction status
+            function updateTransactionStatus(intentId, status) {
+                const transaction = transactions.find(t => t.intentId === intentId);
+                if (transaction) {
+                    transaction.status = status;
+                    localStorage.setItem('zecret-banker-intents', JSON.stringify(transactions));
+                    renderTransactions();
+                }
+            }
+            
+            // Render transactions in UI
+            function renderTransactions() {
+                const container = document.getElementById('transactions-container');
+                
+                if (transactions.length === 0) {
+                    container.innerHTML = '<p>No recent intents found. Create an intent to see it here.</p>';
+                    return;
+                }
+                
+                let html = '';
+                transactions.forEach(transaction => {
+                    let details = '';
+                    
+                    if (transaction.type === 'bridge_to_zcash') {
+                        details = `${transaction.params.amount} NEAR to Zcash address ${transaction.params.receiverZcashAddress.substring(0, 8)}...`;
+                    } else if (transaction.type === 'bridge_to_secret') {
+                        details = `${transaction.params.amount} NEAR to Secret address ${transaction.params.receiverSecretAddress.substring(0, 8)}...`;
+                    } else if (transaction.type === 'private_swap') {
+                        details = `Swap ${transaction.params.amount} ${transaction.params.fromToken} to ${transaction.params.toToken}`;
+                    }
+                    
+                    html += `
+                        <div class="transaction-item">
+                            <strong>${transaction.type}</strong>
+                            <span class="transaction-status status-${transaction.status}">${transaction.status}</span>
+                            <p>${details}</p>
+                            <small>Intent ID: ${transaction.intentId}</small>
+                            <div>
+                                <button onclick="checkIntentStatus('${transaction.intentId}')">Check Status</button>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                container.innerHTML = html;
+            }
+            
+            // Load transactions from localStorage
+            function loadTransactions() {
+                const savedTransactions = localStorage.getItem('zecret-banker-intents');
+                if (savedTransactions) {
+                    transactions = JSON.parse(savedTransactions);
+                    renderTransactions();
+                }
+            }
+            
+            // Initialize
+            loadTransactions();
+            
+            // Make function available globally for the onclick handler
+            window.checkIntentStatus = function(intentId) {
+                document.getElementById('intent-id').value = intentId;
+                document.querySelector('.tab-btn[data-tab="check-status"]').click();
+                document.getElementById('check-status-form').dispatchEvent(new Event('submit'));
+            };
+        });
+    </script>
+</body>
+</html> 

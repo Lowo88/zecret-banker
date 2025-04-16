@@ -41,12 +41,17 @@ const secretNetworkService = new SecretNetworkService({
   chainId: process.env.SECRET_CHAIN_ID || 'pulsar-2'
 });
 
+// Initialize NEAR Intents utils
+const NearUtils = require('./src/blockchain/nearUtils');
+const nearUtils = new NearUtils(nearConfig);
+
 // Initialize services on startup
 (async () => {
   try {
     await agentService.initialize();
     await zcashService.initialize();
     await secretNetworkService.initialize();
+    await nearUtils.initialize();
     console.log('All services initialized successfully');
   } catch (error) {
     console.error('Error initializing services:', error);
@@ -300,6 +305,71 @@ app.post('/api/validate-token', async (req, res) => {
   } catch (error) {
     console.error('Error validating token:', error);
     return res.status(500).json({ valid: false, error: error.message });
+  }
+});
+
+// NEAR Intents endpoints
+app.post('/api/intents/bridge-to-zcash', async (req, res) => {
+  try {
+    const { amount, receiverAddress, shielded } = req.body;
+    
+    if (!amount || !receiverAddress) {
+      return res.status(400).json({ success: false, error: 'Amount and receiver address are required' });
+    }
+    
+    const result = await nearUtils.bridgeToZcash(amount, receiverAddress, shielded);
+    res.json({ success: true, ...result });
+  } catch (error) {
+    console.error('Error creating bridge intent to Zcash:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+app.post('/api/intents/bridge-to-secret', async (req, res) => {
+  try {
+    const { amount, receiverAddress, encrypted } = req.body;
+    
+    if (!amount || !receiverAddress) {
+      return res.status(400).json({ success: false, error: 'Amount and receiver address are required' });
+    }
+    
+    const result = await nearUtils.bridgeToSecret(amount, receiverAddress, encrypted);
+    res.json({ success: true, ...result });
+  } catch (error) {
+    console.error('Error creating bridge intent to Secret Network:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+app.post('/api/intents/private-swap', async (req, res) => {
+  try {
+    const { fromToken, toToken, amount, minAmountOut, privacyLevel } = req.body;
+    
+    if (!fromToken || !toToken || !amount) {
+      return res.status(400).json({ success: false, error: 'From token, to token, and amount are required' });
+    }
+    
+    const result = await nearUtils.createPrivateSwap(fromToken, toToken, amount, minAmountOut, privacyLevel);
+    res.json({ success: true, ...result });
+  } catch (error) {
+    console.error('Error creating private swap intent:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+app.get('/api/intents/status/:intentId', async (req, res) => {
+  try {
+    const { intentId } = req.params;
+    
+    if (!intentId) {
+      return res.status(400).json({ success: false, error: 'Intent ID is required' });
+    }
+    
+    const result = await nearUtils.checkIntentStatus(intentId);
+    res.json({ success: true, ...result });
+  } catch (error) {
+    console.error('Error checking intent status:', error);
+    res.status(500).json({ success: false, error: error.message });
   }
 });
 
